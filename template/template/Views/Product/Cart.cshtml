@@ -1,0 +1,215 @@
+﻿@model List<template.Models.CartItem>
+
+
+@{
+    ViewBag.Title = "Cart";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<div class="cart-container" style="padding-top: 40px; padding-bottom: 40px;margin-top:150px ;margin-bottom:40px">
+    @if (Model.Count == 0)
+    {
+        <p>Your cart is empty.</p>
+    }
+    else
+    {
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr id="cart-item-@item.ProductId">
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <img src="@item.Product.ImageUrl" alt="@item.Product.Name" style="width: 100px; height: auto; margin-right: 15px;" />
+                                <div>
+                                    <strong>@item.Product.Name</strong><br />
+                                    <span>@item.Product.Description</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@item.Product.Price.ToString("C")</td>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <button class="quantity-minus" data-product-id="@item.ProductId">-</button>
+                                <input type="text"
+                                       value="@item.Quantity"
+                                       readonly
+                                       class="quantity-input"
+                                       data-product-id="@item.ProductId"
+                                       style="text-align: center; width: 50px; margin: 0 5px;" />
+                                <button class="quantity-plus" data-product-id="@item.ProductId">+</button>
+                            </div>
+                        </td>
+                        <td class="item-total">@item.Product.Price * @item.Quantity</td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="3" style="text-align: right;">Cart Total:</td>
+                    <td id="cart-total">@Model.Sum(i => i.Quantity * i.Product.Price).ToString("C")</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Handle quantity increment
+        $('.quantity-plus').on('click', function () {
+            var productId = $(this).data('product-id');
+            var quantityInput = $('#cart-item-' + productId + ' .quantity-input');
+            var currentQuantity = parseInt(quantityInput.val());
+
+            quantityInput.val(currentQuantity + 1);
+            updateCart(productId, currentQuantity + 1);
+        });
+
+        // Handle quantity decrement
+        $('.quantity-minus').on('click', function () {
+            var productId = $(this).data('product-id');
+            var quantityInput = $('#cart-item-' + productId + ' .quantity-input');
+            var currentQuantity = parseInt(quantityInput.val());
+
+            if (currentQuantity > 1) {
+                quantityInput.val(currentQuantity - 1);
+                updateCart(productId, currentQuantity - 1);
+            } else {
+                // Set quantity to 0 and disable the item
+                quantityInput.val(0);
+                updateCart(productId, 0);
+                disableCartItem(productId);
+            }
+        });
+
+        function updateCart(productId, quantity) {
+            $.ajax({
+                url: '@Url.Action("UpdateCart", "Product")',
+                type: 'POST',
+                data: {
+                    productId: productId,
+                    quantity: quantity
+                },
+                success: function (response) {
+                    // Update the item total and cart total
+                    $('#cart-item-' + productId + ' .item-total').text(response.itemTotal.toFixed(2));
+                    $('#cart-total').text(response.cartTotal.toFixed(2));
+
+                    // Disable the item if quantity is 0
+                    if (quantity == 0) {
+                        disableCartItem(productId);
+                    }
+                }
+            });
+        }
+
+        function disableCartItem(productId) {
+            var cartItem = $('#cart-item-' + productId);
+            cartItem.addClass('disabled');
+            cartItem.find('button, input').attr('disabled', true);
+        }
+    });
+</script>
+
+<style>
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 80px; /* Ensure this is consistent */
+        z-index: 1000; /* High enough to stay on top */
+        background-color: #fff; /* Or whatever color you want */
+    }
+
+
+    .cart-container {
+        max-width: 800px;
+        margin-left:  auto;
+        margin-right:auto;
+       /* margin-top: 1000px;*/
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+   /*     padding-top: 10px;
+        padding-bottom: 40px;*/
+      /*  margin-top: 5rem;*/
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%; /* Ensure the full height of the viewport is used */
+        font-family: 'Poppins', sans-serif;
+        /*   display: flex;
+       flex-direction: column;*/
+    }
+
+    .cart-table {
+        width: 100%;
+/*        border-collapse: collapse;*/
+    }
+
+        .cart-table th, .cart-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .cart-table th {
+            background-color: #343a40;
+            color: #fff;
+        }
+
+        .cart-table td {
+            background-color: #fff;
+        }
+
+    .quantity-minus, .quantity-plus {
+        background-color: #343a40;
+        color: #fff;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+        .quantity-minus:hover, .quantity-plus:hover {
+            background-color: #495057;
+        }
+
+    .quantity-input {
+        text-align: center;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .item-total {
+        font-weight: bold;
+    }
+
+    #cart-total {
+        font-weight: bold;
+        color: #343a40;
+    }
+
+    /* Style for disabled cart items */
+    .disabled {
+        opacity: 0.5;
+    }
+
+        .disabled button, .disabled input {
+            cursor: not-allowed;
+        }
+</style>

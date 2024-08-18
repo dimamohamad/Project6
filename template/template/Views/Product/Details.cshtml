@@ -1,0 +1,53 @@
+﻿@model template.Models.Product
+
+@{
+    ViewBag.Title = "DetailsPage";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="product-details text-center" style="padding-top: 100px; padding-bottom: 40px;">
+    <h2>@Model.Name</h2>
+    <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid" />
+    <p><b>Description:</b> @Model.Description</p>
+    <p><b>Price:</b> @Model.Price.ToString("C")</p>
+    <form action="@Url.Action("AddToCart", "Product", new { productId = Model.ProductId })" method="post">
+        <button type="submit" class="btn btn-dark">Add to Cart</button>
+    </form>
+</div>
+
+<style>
+    .product-details {
+        text-align: center; /* Centers the text in the product details */
+        max-width: 600px;
+        margin: 0 auto; /* Center the product details on the page */
+    }
+
+        .product-details h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .product-details p {
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+
+    .btn-dark {
+        background-color: #000; /* Black background */
+        color: #fff; /* White text */
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-dark:hover {
+            background-color: #333; /* Slightly lighter black on hover */
+        }
+
+    .product-details form {
+        margin-top: 20px;
+    }
+</style>
